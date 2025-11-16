@@ -26,8 +26,9 @@ const publicClient = createPublicClient({
   transport: http(polkadotHub.rpcUrls.default.http[0]),
 });
 
-const CANVAS_SIZE = 128; // Reduced for better performance and visibility
-const PIXEL_SIZE = 4; // Display pixels as 4x4 for better visibility
+const WALL_SIZE = 256; // on-chain wall grid (Solidity)
+const CANVAS_SIZE = 128; // visual grid resolution
+const PIXEL_SIZE = 4; // display cell size in px
 
 export default function GraffitiWall() {
   const { address, connect, checkingConnection } = usePolkadotWallet();
@@ -134,192 +135,226 @@ export default function GraffitiWall() {
   }, [tokenId]);
 
   // Render canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // Render canvas
+useEffect(() => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
 
-    // Clear with dark background
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false;
+  // Clear with dark background
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = false;
 
-    // Draw grid
-    ctx.strokeStyle = "#2a2a2a";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= CANVAS_SIZE; i += 8) {
-      ctx.beginPath();
-      ctx.moveTo(i * PIXEL_SIZE, 0);
-      ctx.lineTo(i * PIXEL_SIZE, CANVAS_SIZE * PIXEL_SIZE);
-      ctx.stroke();
+  // Draw grid
+  ctx.strokeStyle = "#2a2a2a";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= CANVAS_SIZE; i += 8) {
+    ctx.beginPath();
+    ctx.moveTo(i * PIXEL_SIZE, 0);
+    ctx.lineTo(i * PIXEL_SIZE, CANVAS_SIZE * PIXEL_SIZE);
+    ctx.stroke();
 
-      ctx.beginPath();
-      ctx.moveTo(0, i * PIXEL_SIZE);
-      ctx.lineTo(CANVAS_SIZE * PIXEL_SIZE, i * PIXEL_SIZE);
-      ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i * PIXEL_SIZE);
+    ctx.lineTo(CANVAS_SIZE * PIXEL_SIZE, i * PIXEL_SIZE);
+    ctx.stroke();
+  }
+
+  // Helper: safely parse Arkiv color formats (number | string)
+  const parseStrokeColor = (c: any): number => {
+    if (typeof c === "number") return c >>> 0;
+    if (typeof c === "string") {
+      // handle "0xff00ff", "ff00ff", "16711935"
+      if (c.startsWith("0x")) return parseInt(c.slice(2), 16) >>> 0;
+      if (/^[0-9a-fA-F]+$/.test(c)) return parseInt(c, 16) >>> 0;
+      const num = Number(c);
+      if (Number.isFinite(num)) return num >>> 0;
     }
+    return 0xffffff; // fallback white
+  };
 
-    // Draw all painted pixels
-    strokes.forEach((stroke) => {
-      const numericColor = Number(stroke.color);
-      const colorHex = `#${numericColor.toString(16).padStart(6, "0")}`;
-      ctx.fillStyle = colorHex;
-      ctx.fillRect(
-        stroke.x * PIXEL_SIZE,
-        stroke.y * PIXEL_SIZE,
-        PIXEL_SIZE,
-        PIXEL_SIZE
-      );
-      
-      // Add subtle border to each painted pixel for visibility
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        stroke.x * PIXEL_SIZE,
-        stroke.y * PIXEL_SIZE,
-        PIXEL_SIZE,
-        PIXEL_SIZE
-      );
+  // Draw all painted pixels from strokes[]
+  strokes.forEach((stroke) => {
+    const sx = Number(stroke.x);
+    const sy = Number(stroke.y);
+    if (!Number.isFinite(sx) || !Number.isFinite(sy)) return;
+
+    // Scale from WALL_SIZE (256) → CANVAS_SIZE (128)
+    let displayX = Math.floor((sx / WALL_SIZE) * CANVAS_SIZE);
+    let displayY = Math.floor((sy / WALL_SIZE) * CANVAS_SIZE);
+
+    // clamp to [0, CANVAS_SIZE - 1]
+    displayX = Math.max(0, Math.min(CANVAS_SIZE - 1, displayX));
+    displayY = Math.max(0, Math.min(CANVAS_SIZE - 1, displayY));
+
+    const numericColor = parseStrokeColor(stroke.color);
+    const colorHex = `#${numericColor.toString(16).padStart(6, "0")}`;
+
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(
+      displayX * PIXEL_SIZE,
+      displayY * PIXEL_SIZE,
+      PIXEL_SIZE,
+      PIXEL_SIZE
+    );
+
+    // Subtle border
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      displayX * PIXEL_SIZE,
+      displayY * PIXEL_SIZE,
+      PIXEL_SIZE,
+      PIXEL_SIZE
+    );
+  });
+
+  // Draw hovered pixel with preview (already in display coordinates)
+  if (hoveredPixel) {
+    ctx.fillStyle = selectedColor;
+    ctx.fillRect(
+      hoveredPixel.x * PIXEL_SIZE,
+      hoveredPixel.y * PIXEL_SIZE,
+      PIXEL_SIZE,
+      PIXEL_SIZE
+    );
+
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(
+      hoveredPixel.x * PIXEL_SIZE + 1,
+      hoveredPixel.y * PIXEL_SIZE + 1,
+      PIXEL_SIZE - 2,
+      PIXEL_SIZE - 2
+    );
+
+    ctx.shadowColor = selectedColor;
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = selectedColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      hoveredPixel.x * PIXEL_SIZE,
+      hoveredPixel.y * PIXEL_SIZE,
+      PIXEL_SIZE,
+      PIXEL_SIZE
+    );
+    ctx.shadowBlur = 0;
+  }
+
+  // Highlight last painted pixel (also in display coordinates)
+  if (lastPaintedPixel) {
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(
+      lastPaintedPixel.x * PIXEL_SIZE - 1,
+      lastPaintedPixel.y * PIXEL_SIZE - 1,
+      PIXEL_SIZE + 2,
+      PIXEL_SIZE + 2
+    );
+
+    ctx.shadowColor = lastPaintedPixel.color;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = lastPaintedPixel.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      lastPaintedPixel.x * PIXEL_SIZE - 2,
+      lastPaintedPixel.y * PIXEL_SIZE - 2,
+      PIXEL_SIZE + 4,
+      PIXEL_SIZE + 4
+    );
+    ctx.shadowBlur = 0;
+  }
+}, [strokes, hoveredPixel, selectedColor, lastPaintedPixel]);
+
+
+const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
+  if (!tokenId || cooldownRemaining > 0 || !address) return;
+
+  const canvas = canvasRef.current;
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  // --- DISPLAY COORDINATES (0–127) ---
+  const displayX = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
+  const displayY = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+
+  if (
+    displayX < 0 ||
+    displayX >= CANVAS_SIZE ||
+    displayY < 0 ||
+    displayY >= CANVAS_SIZE
+  ) {
+    return;
+  }
+
+  // --- MAP TO WALL COORDINATES (0–255) ---
+  const wallX = Math.floor((displayX / CANVAS_SIZE) * WALL_SIZE);
+  const wallY = Math.floor((displayY / CANVAS_SIZE) * WALL_SIZE);
+
+  // convert selectedColor "#RRGGBB" → number
+  const colorInt = parseInt(selectedColor.slice(1), 16);
+
+  // optimistic update
+  const optimisticStroke: GraffitiStroke = {
+    id: `optimistic-${Date.now()}`,
+    x: wallX,
+    y: wallY,
+    tokenId: tokenId.toString(),
+    color: colorInt,
+    timestamp: Date.now(),
+  };
+
+  setStrokes((prev) => [
+    ...prev.filter((s) => !(s.x === displayX && s.y === displayY)),
+    optimisticStroke,
+  ]);
+
+  setLastPaintedPixel({
+    x: displayX,
+    y: displayY,
+    color: selectedColor,
+  });
+
+  setLoading(true);
+
+  try {
+    // ✅ FIX: walletClient defined HERE inside the handler
+    const walletClient = createWalletClient({
+      chain: polkadotHub,
+      transport: custom((window as any).ethereum),
+      account: address as `0x${string}`,
     });
 
-    // Draw hovered pixel with preview
-    if (hoveredPixel) {
-      // Draw solid preview color
-      ctx.fillStyle = selectedColor;
-      ctx.fillRect(
-        hoveredPixel.x * PIXEL_SIZE,
-        hoveredPixel.y * PIXEL_SIZE,
-        PIXEL_SIZE,
-        PIXEL_SIZE
-      );
-      
-      // Draw bright white border for visibility
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(
-        hoveredPixel.x * PIXEL_SIZE + 1,
-        hoveredPixel.y * PIXEL_SIZE + 1,
-        PIXEL_SIZE - 2,
-        PIXEL_SIZE - 2
-      );
-      
-      // Draw outer glow
-      ctx.shadowColor = selectedColor;
-      ctx.shadowBlur = 15;
-      ctx.strokeStyle = selectedColor;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        hoveredPixel.x * PIXEL_SIZE,
-        hoveredPixel.y * PIXEL_SIZE,
-        PIXEL_SIZE,
-        PIXEL_SIZE
-      );
-      ctx.shadowBlur = 0; // Reset shadow
-    }
-    
-    // Highlight the last painted pixel with a glow to make new strokes obvious
-    if (lastPaintedPixel) {
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(
-        lastPaintedPixel.x * PIXEL_SIZE - 1,
-        lastPaintedPixel.y * PIXEL_SIZE - 1,
-        PIXEL_SIZE + 2,
-        PIXEL_SIZE + 2
-      );
+    const txHash = await walletClient.writeContract({
+      address: GRAFFITI_ADDRESS,
+      abi: GRAFFITI_ABI,
+      functionName: "paint",
+      args: [tokenId, wallX, wallY, colorInt],
+    });
 
-      ctx.shadowColor = lastPaintedPixel.color;
-      ctx.shadowBlur = 10;
-      ctx.strokeStyle = lastPaintedPixel.color;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        lastPaintedPixel.x * PIXEL_SIZE - 2,
-        lastPaintedPixel.y * PIXEL_SIZE - 2,
-        PIXEL_SIZE + 4,
-        PIXEL_SIZE + 4
-      );
-      ctx.shadowBlur = 0;
-    }
-  }, [strokes, hoveredPixel, selectedColor, lastPaintedPixel]);
+    console.log("🎨 Stroke TX:", txHash);
 
-  const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!tokenId || cooldownRemaining > 0 || !address) return;
+    // keep the optimistic stroke
+    setCooldownRemaining(300); // or read PAINT_COOLDOWN()
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  } catch (err: any) {
+    console.error("Paint error:", err);
 
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
-    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    // rollback optimistic stroke
+    setStrokes((prev) => prev.filter((s) => s.id !== optimisticStroke.id));
 
-    if (x < 0 || x >= CANVAS_SIZE || y < 0 || y >= CANVAS_SIZE) return;
+    alert("Failed to paint pixel.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-    // Optimistically paint locally for instant feedback
-    const colorInt = parseInt(selectedColor.slice(1), 16);
-    const optimisticStroke = {
-      id: `optimistic-${Date.now()}-${x}-${y}`,
-      x,
-      y,
-      tokenId: tokenId.toString(),
-      color: colorInt,
-      timestamp: Date.now(),
-    };
-    setStrokes((prev) => [
-      ...prev.filter((s) => !(s.x === x && s.y === y)),
-      optimisticStroke,
-    ]);
-    setLastPaintedPixel({ x, y, color: selectedColor });
 
-    setLoading(true);
-
-    try {
-      const walletClient = createWalletClient({
-        transport: custom((window as any).ethereum),
-        chain: polkadotHub,
-      });
-
-      const hash = await walletClient.writeContract({
-        address: GRAFFITI_ADDRESS,
-        abi: GRAFFITI_ABI,
-        functionName: "paint",
-        args: [tokenId, x, y, colorInt],
-        account: address as `0x${string}`,
-      });
-
-      // Add to local state immediately
-      const newStroke = {
-        ...optimisticStroke,
-        id: `${Date.now()}-${x}-${y}`,
-      };
-      
-      console.log(`🎨 Painted pixel at (${x}, ${y}) with color #${colorInt.toString(16).padStart(6, "0")}`);
-      
-      setStrokes((prev) => [
-        ...prev.filter((s) => !(s.x === x && s.y === y)),
-        newStroke,
-      ]);
-
-      setCooldownRemaining(300); // 5 minutes
-
-      // Trigger auto-evolution after painting (in background)
-      fetch("/api/auto-evolve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      }).catch(() => {
-        // Silent fail - evolution will happen later
-      });
-    } catch (e: any) {
-      console.error("Paint error:", e);
-      alert(`Failed to paint: ${e.message || "Unknown error"}`);
-      // rollback optimistic paint
-      setStrokes((prev) => prev.filter((s) => s.id !== optimisticStroke.id));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCanvasMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;

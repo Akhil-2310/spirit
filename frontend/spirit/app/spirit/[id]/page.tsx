@@ -258,7 +258,7 @@ export default function SpiritDetail() {
             <div className="space-y-4">
               {history.map((snapshot, idx) => (
                 <div
-                  key={snapshot.id}
+                  key={`${snapshot.id || "snapshot"}-${snapshot.createdAt}-${idx}`}
                   className="border border-white/10 rounded-xl p-4 bg-black/30 hover:bg-black/50 transition-all"
                 >
                   <div className="flex justify-between items-center mb-3">
@@ -378,4 +378,3 @@ function generatePersonalityDescription(attrs: SpiritAttributes): string {
 
   return intro + traits.join(", ") + ". Its essence reflects the unique journey through the Polkadot network.";
 }
-
