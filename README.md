@@ -154,7 +154,7 @@ A collaborative 256x256 pixel canvas where:
 
 ## Smart Contracts
 
-### KusamaSoulNFT
+### [KusamaSoulNFT](https://blockscout-passet-hub.parity-testnet.parity.io/token/0x99466103FaC328a7596DEAF4b728e24E69d252bc) 
 - **Mint**: Users can mint one soul per address
 - **Evolve**: Attributes update based on on-chain activity
 - **Query**: Read current attributes and history
