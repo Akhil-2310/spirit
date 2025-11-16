@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createPublicClient, createWalletClient, http, parseAbi, formatEther } from "viem";
+import { createPublicClient, createWalletClient, http, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { stringToPayload } from "@arkiv-network/sdk/utils";
 import { createWalletClient as createArkivWallet, http as arkivHttp } from "@arkiv-network/sdk";
@@ -7,8 +7,6 @@ import { mendoza } from "@arkiv-network/sdk/chains";
 
 const POLKADOT_RPC = "https://testnet-passet-hub-eth-rpc.polkadot.io";
 const BLOCKSCOUT_BASE = "https://blockscout-passet-hub.parity-testnet.parity.io";
-const SOUL_ADDRESS = process.env.NEXT_PUBLIC_SOUL_CONTRACT! as `0x${string}`;
-
 const polkadotHub = {
   id: 420420422,
   name: "Polkadot Hub TestNet",
@@ -27,23 +25,65 @@ const publicClient = createPublicClient({
   transport: http(POLKADOT_RPC),
 });
 
-// Server-side evolution account
-const evolutionAccount = privateKeyToAccount(
-  `0x${process.env.EVOLUTION_PRIVATE_KEY!}`
-);
+function normalizePrivateKey(value: string | undefined, name: string): `0x${string}` {
+  if (!value) {
+    throw new Error(`${name} is not set`);
+  }
+  const hex = value.startsWith("0x") ? value.slice(2) : value;
+  if (!/^[0-9a-fA-F]{64}$/.test(hex)) {
+    throw new Error(`${name} must be a 32-byte hex string`);
+  }
+  return `0x${hex}` as `0x${string}`;
+}
 
-const walletClient = createWalletClient({
-  account: evolutionAccount,
-  chain: polkadotHub,
-  transport: http(POLKADOT_RPC),
-});
+function getSoulAddress(): `0x${string}` {
+  const address = process.env.NEXT_PUBLIC_SOUL_CONTRACT;
+  if (!address || !address.startsWith("0x") || address.length !== 42) {
+    throw new Error("NEXT_PUBLIC_SOUL_CONTRACT is missing or invalid");
+  }
+  return address as `0x${string}`;
+}
 
-// Arkiv client
-const arkivWallet = createArkivWallet({
-  chain: mendoza,
-  transport: arkivHttp("https://mendoza.hoodi.arkiv.network/rpc"),
-  account: privateKeyToAccount(process.env.ARKIV_PRIVATE_KEY! as `0x${string}`),
-});
+let evolutionAccount:
+  | ReturnType<typeof privateKeyToAccount>
+  | null = null;
+let walletClient:
+  | ReturnType<typeof createWalletClient>
+  | null = null;
+let arkivWallet:
+  | ReturnType<typeof createArkivWallet>
+  | null = null;
+
+function getEvolutionAccount() {
+  if (!evolutionAccount) {
+    const key = normalizePrivateKey(process.env.EVOLUTION_PRIVATE_KEY, "EVOLUTION_PRIVATE_KEY");
+    evolutionAccount = privateKeyToAccount(key);
+  }
+  return evolutionAccount;
+}
+
+function getWalletClient() {
+  if (!walletClient) {
+    walletClient = createWalletClient({
+      account: getEvolutionAccount(),
+      chain: polkadotHub,
+      transport: http(POLKADOT_RPC),
+    });
+  }
+  return walletClient;
+}
+
+function getArkivWallet() {
+  if (!arkivWallet) {
+    const key = normalizePrivateKey(process.env.ARKIV_PRIVATE_KEY, "ARKIV_PRIVATE_KEY");
+    arkivWallet = createArkivWallet({
+      chain: mendoza,
+      transport: arkivHttp("https://mendoza.hoodi.arkiv.network/rpc"),
+      account: privateKeyToAccount(key),
+    });
+  }
+  return arkivWallet;
+}
 
 // Fetch transactions from Blockscout
 async function fetchTransactions(address: string) {
@@ -98,7 +138,9 @@ async function storeToArkiv(spiritAddress: string, tokenId: bigint, attrs: any) 
     createdAt: Date.now(),
   }));
 
-  await arkivWallet.createEntity({
+  const arkiv = getArkivWallet();
+
+  await arkiv.createEntity({
     payload,
     contentType: "application/json",
     attributes: [
@@ -115,13 +157,14 @@ export async function POST(req: NextRequest) {
   try {
     const { address } = await req.json();
 
+    const soulAddress = getSoulAddress();
     if (!address || !address.startsWith("0x")) {
       return Response.json({ error: "Invalid address" }, { status: 400 });
     }
 
     // 1. Check if user has a Spirit
     const tokenId = (await publicClient.readContract({
-      address: SOUL_ADDRESS,
+      address: soulAddress,
       abi: SOUL_ABI,
       functionName: "spiritOf",
       args: [address as `0x${string}`],
@@ -138,25 +181,14 @@ export async function POST(req: NextRequest) {
     const attrs = computeAttributes(txs, address);
 
     // 4. Update Spirit on-chain
-    const hash = await walletClient.writeContract({
-      address: SOUL_ADDRESS,
+    const hash = await getWalletClient().writeContract({
+      address: soulAddress,
+      chain: polkadotHub as any,
       abi: SOUL_ABI,
       functionName: "evolveSpirit",
       args: [tokenId, attrs.aggression, attrs.serenity, attrs.chaos, attrs.influence, attrs.connectivity],
-    });
-
-    // Wait for confirmation
-    await publicClient.waitForTransactionReceipt({ hash });
-
-    // 5. Store snapshot to Arkiv (old ones auto-expire via TTL)
-    await storeToArkiv(address, tokenId, attrs);
-
-    return Response.json({
-      success: true,
-      tokenId: tokenId.toString(),
-      attributes: attrs,
-      txHash: hash,
-    });
+      account: null
+    }) as `0x${string}`;
   } catch (error: any) {
     console.error("Evolution error:", error);
     return Response.json(
@@ -165,4 +197,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
