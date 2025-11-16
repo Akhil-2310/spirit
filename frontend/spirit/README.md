@@ -1,4 +1,4 @@
-# Kusama Spirits - Frontend
+# Kusama Spirits 
 
 A Next.js application for the Kusama Spirits project - living, evolving NFTs that grow from blockchain behavior.
 
