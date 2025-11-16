@@ -9,11 +9,14 @@ All Soul evolution, mood spikes, pixel strokes, and ephemeral states are stored,
 
 This is part social experiment, part generative art platform, part on-chain identity primitive.
 
-[Video Demo](https://www.loom.com/share/8ea805b1094748d49272d7966c28c6ae)
+## [Video Demo](https://www.loom.com/share/8ea805b1094748d49272d7966c28c6ae)
 
-[Live Link](https://spirit-wggn.vercel.app/)
+## [Live Link](https://spirit-wggn.vercel.app/)
 
-[Presentation](https://www.canva.com/design/DAG42Dj_sjk/-ERWU0DyyDTuAwqoEEVaCA/edit)
+## [Presentation](https://www.canva.com/design/DAG42Dj_sjk/-ERWU0DyyDTuAwqoEEVaCA/edit)
+
+## [Arkiv Block Explorer Link](https://explorer.mendoza.hoodi.arkiv.network/address/0x8b916003D0C8F1f468a720BA4Ab5EA9678bc6e61?tab=txs)
+
 
 ## Features
 
@@ -70,7 +73,6 @@ A collaborative 256x256 pixel canvas where:
 - All pixels are stored on-chain
 - Historical data available via Arkiv
 
-## [Arkiv Block Explorer Link](https://explorer.mendoza.hoodi.arkiv.network/address/0x8b916003D0C8F1f468a720BA4Ab5EA9678bc6e61?tab=txs)
 
 ## Smart Contracts
 
