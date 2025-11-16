@@ -1,6 +1,6 @@
 # SoulScape
 
-Soulscape transforms your Polkadot on-chain activity into a living digital organism.
+Soulscape transforms your Polkadot on-chain activity into a living digital art.
 
 Every wallet mints a Polkadot “Soul” NFT whose traits evolve with real blockchain behavior.
 These traits generate dynamic SVG art, mood-driven music, and determine how you paint on a real-time collaborative graffiti wall.
@@ -15,13 +15,81 @@ This is part social experiment, part generative art platform, part on-chain iden
 
 [Presentation](https://www.canva.com/design/DAG42Dj_sjk/-ERWU0DyyDTuAwqoEEVaCA/edit)
 
-## Features
+## 🎭 **1. Dynamic Polkadot Soul NFTs**
+Each Soul evolves using your actual on-chain behavior:
 
-- 🎨 **Generative Art Visualization** - Animated canvas that reflects spirit attributes
-- 🎵 **Generative Music** - Dynamic audio based on spirit personality using Tone.js
-- 🧱 **Collaborative Graffiti Wall** - 256x256 pixel canvas where spirits paint together
-- 📊 **Spirit Evolution Tracking** - View historical snapshots via Arkiv Network
-- 🔗 **Kusama Hub Integration** - Native support for Kusama Asset Hub
+- **🔥 Aggression** — activity intensity  
+- **🧘 Serenity** — stability of behavior  
+- **⚡ Chaos** — randomness of interactions  
+- **👥 Influence** — interactions with others  
+- **🌐 Connectivity** — frequency of transactions  
+
+These attributes drive:
+
+- Animated SVG generative artwork  
+- Dynamic color palettes  
+- Ambient generative music  
+- Pixel color on the graffiti wall  
+
+---
+
+## 🎨 **2. The Polkadot Graffiti Wall**
+A **256×256 global canvas** shared by the entire network.
+
+- Only Souls can paint  
+- One pixel every 5 minutes  
+- Pixel color = Soul’s mood  
+- Canvas updates live via Arkiv subscriptions  
+- Complete replay history stored with Arkiv  
+
+A **collective mural** built by all Souls over time.
+
+---
+
+## 🧠 **3. Arkiv-Powered Living Memory**
+
+Soulscape integrates **all four Arkiv capabilities**:
+
+### 🟦 **CRUD**
+- Save Soul evolution snapshots  
+- Store all graffiti strokes  
+- Log aura transitions & temporary states  
+
+### 🟧 **TTL**
+Used for ephemeral elements that fade automatically:
+- Mood boosts  
+- Hot streaks  
+- Temporary aura glows  
+- Stress indicator spikes  
+
+### 🟩 **Queries**
+- Fetch Soul timelines  
+- Replay full graffiti wall history  
+- Build analytics & mood scoring  
+
+### 🟪 **Subscriptions**
+- Real-time canvas updates  
+- Live Soul evolution updates  
+- Zero polling → instant UI reactivity  
+
+Arkiv gives Soulscape the ability to **feel alive**.
+
+---
+
+## 🎶 **4. Generative Soundscapes**
+
+Each Soul creates its own evolving soundtrack:
+
+- Aggression → tempo  
+- Serenity → reverb & calm pads  
+- Chaos → random notes  
+- Influence → polyphony  
+- Connectivity → chord complexity  
+
+Your Soul sounds like *you* — and changes with you.
+
+---
+
 
 ## Tech Stack
 
