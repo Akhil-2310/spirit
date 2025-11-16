@@ -26,6 +26,16 @@ This is part social experiment, part generative art platform, part on-chain iden
 - 📊 **Spirit Evolution Tracking** - View historical snapshots via Arkiv Network
 - 🔗 **Kusama Hub Integration** - Native support for Kusama Asset Hub
 
+## How we use Arkiv
+
+- **Evolution history**: Each time a Soul evolves, we store a `spiritSnapshot` entity on Arkiv (Mendoza testnet) containing the wallet’s spirit address, token ID, computed attributes, stage, SVG image, and timestamp. These snapshots are queried by the app to render historical charts and evolving art.
+
+- **Graffiti history**: A backend sync script watches `PixelPainted` events from the `GraffitiWall` contract and writes each stroke as a `graffitiStroke` entity with coordinates, color, tokenId, timestamp, and tx metadata. The frontend reads these entities from Arkiv to reconstruct the collaborative wall and its recent activity.
+
+- **Query layer**: Server-side helpers wrap Arkiv’s query API and power `/api/spirit-history` and `/api/graffiti-history`, while the frontend uses simple `fetchSpiritSnapshots` / `fetchGraffitiStrokes` functions instead of talking to Arkiv directly.
+
+
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 with App Router
