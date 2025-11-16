@@ -125,6 +125,93 @@ function computeAttributes(txs: any[], address: string) {
   return { aggression, serenity, chaos, influence, connectivity };
 }
 
+function hashSeed(input: string) {
+  let h1 = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h1 ^= input.charCodeAt(i);
+    h1 = Math.imul(h1, 0x01000193);
+  }
+  return h1 >>> 0;
+}
+
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = seed + 0x6d2b79f5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function generateSpiritSvg(attrs: { aggression: number; serenity: number; chaos: number; influence: number; connectivity: number }, label: string) {
+  const seed = hashSeed(JSON.stringify(attrs) + label);
+  const rand = mulberry32(seed);
+  const size = 480;
+  const center = size / 2;
+  const layers = 6;
+
+  const hueBase = Math.floor(lerp(0, 360, attrs.serenity / 100));
+  const chaos = attrs.chaos / 100;
+  const chaosIntensity = Math.pow(chaos, 1.2);
+  const strokeBase = lerp(1, 6, attrs.influence / 100);
+
+  const palette = Array.from({ length: layers }, (_, i) => {
+    const hue = (hueBase + i * lerp(8, 60, chaosIntensity)) % 360;
+    const sat = lerp(45, 85, attrs.aggression / 100);
+    const light = lerp(35, 70, attrs.serenity / 100);
+    return `hsl(${hue}, ${sat}%, ${light}%)`;
+  });
+
+  const nodes = Math.max(5, Math.round(lerp(5, 28, attrs.connectivity / 100) * (1 + 0.5 * chaosIntensity)));
+  const radius = lerp(90, 220, attrs.influence / 100);
+  const noiseScale = 12 + 60 * chaosIntensity;
+
+  const points = Array.from({ length: nodes }, (_, i) => {
+    const angle = 2 * Math.PI * (i / nodes) + rand() * chaos * 1.6;
+    const r = radius * (0.6 + rand() * 0.8 * (1 + chaosIntensity));
+    const baseX = center + Math.cos(angle) * r;
+    const baseY = center + Math.sin(angle) * r;
+    return {
+      x: baseX + (rand() - 0.5) * noiseScale,
+      y: baseY + (rand() - 0.5) * noiseScale,
+    };
+  });
+
+  const lines = points.map((p, i) => {
+    const q = points[(i + 1) % points.length];
+    const weight = strokeBase * (0.6 + rand() * 0.8) * (1 + chaosIntensity * 0.5);
+    const color = palette[i % palette.length];
+    return `<line x1="${p.x.toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${q.x.toFixed(2)}" y2="${q.y.toFixed(2)}" stroke="${color}" stroke-width="${weight.toFixed(2)}" stroke-linecap="round" />`;
+  });
+
+  const orbits = Array.from({ length: layers }, (_, i) => {
+    const r = lerp(40, radius, i / (layers - 1)) * (0.8 + rand() * 0.4 * chaos);
+    const color = palette[(palette.length - 1 - i) % palette.length];
+    const dash = 4 + rand() * 14 * chaos;
+    const opacity = lerp(0.08, 0.35, 1 - i / layers);
+    return `<circle cx="${center}" cy="${center}" r="${r.toFixed(2)}" fill="none" stroke="${color}" stroke-opacity="${opacity.toFixed(2)}" stroke-width="${(strokeBase * 0.6).toFixed(2)}" stroke-dasharray="${dash.toFixed(1)},${(dash * 1.6).toFixed(1)}" />`;
+  });
+
+  const glow = `<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.05"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient>`;
+  const bg = `<rect width="${size}" height="${size}" fill="black"/><rect width="${size}" height="${size}" fill="url(#glow)"/>`;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="background:black">
+    <defs>${glow}</defs>
+    ${bg}
+    ${orbits.join("\n")}
+    ${lines.join("\n")}
+    <circle cx="${center}" cy="${center}" r="${(10 + attrs.influence * 0.5).toFixed(2)}" fill="${palette[0]}" fill-opacity="0.9" />
+    <text x="${center}" y="${size - 24}" text-anchor="middle" fill="white" fill-opacity="0.7" font-size="16" font-family="monospace">${label}</text>
+  </svg>`;
+
+  return svg;
+}
+
 // Store snapshot to Arkiv with TTL
 async function storeToArkiv(spiritAddress: string, tokenId: bigint, attrs: any) {
   const stage = attrs.influence > 70 && attrs.connectivity > 60 ? "ascended"
@@ -136,6 +223,7 @@ async function storeToArkiv(spiritAddress: string, tokenId: bigint, attrs: any) 
     ...attrs,
     stage,
     createdAt: Date.now(),
+    image: generateSpiritSvg(attrs, `Spirit ${tokenId.toString()}`),
   }));
 
   const arkiv = getArkivWallet();
@@ -183,12 +271,28 @@ export async function POST(req: NextRequest) {
     // 4. Update Spirit on-chain
     const hash = await getWalletClient().writeContract({
       address: soulAddress,
-      chain: polkadotHub as any,
+      chain: polkadotHub,
+      account: getEvolutionAccount(),
       abi: SOUL_ABI,
       functionName: "evolveSpirit",
       args: [tokenId, attrs.aggression, attrs.serenity, attrs.chaos, attrs.influence, attrs.connectivity],
-      account: null
-    }) as `0x${string}`;
+    });
+
+    // Wait for confirmation
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    // 5. Store snapshot and art to Arkiv
+    await storeToArkiv(address, tokenId, attrs);
+
+    const image = generateSpiritSvg(attrs, `Spirit ${tokenId.toString()}`);
+
+    return Response.json({
+      success: true,
+      tokenId: tokenId.toString(),
+      attributes: attrs,
+      txHash: hash,
+      image,
+    });
   } catch (error: any) {
     console.error("Evolution error:", error);
     return Response.json(
