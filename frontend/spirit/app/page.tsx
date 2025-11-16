@@ -136,10 +136,10 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-8 py-20">
           <div className="text-center mb-12">
             <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
-              Polkadot Spirits
+              SoulScape - Polkadot Souls
             </h1>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              A living, evolving digital soul that grows from your blockchain behavior — 
+              A living, evolving digital soul that grows from your blockchain behavior - 
               expressed as <span className="text-pink-400 font-semibold">generative art</span>, 
               <span className="text-purple-400 font-semibold"> music</span>, and 
               <span className="text-cyan-400 font-semibold"> collaborative graffiti</span>.

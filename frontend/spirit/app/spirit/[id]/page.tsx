@@ -97,7 +97,7 @@ export default function SpiritDetail() {
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading Spirit...</p>
+          <p className="text-gray-400">Loading Soul...</p>
         </div>
       </main>
     );
@@ -107,7 +107,7 @@ export default function SpiritDetail() {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center p-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-red-400">Spirit Not Found</h1>
+          <h1 className="text-4xl font-bold mb-4 text-red-400">Soul Not Found</h1>
           <p className="text-gray-400 mb-6">{error || "This spirit does not exist"}</p>
           <button
             onClick={() => router.push("/")}
@@ -144,7 +144,7 @@ export default function SpiritDetail() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
-                Polkadot Spirit #{tokenId}
+                Polkadot Soul #{tokenId}
               </h1>
               <p className="text-gray-400 text-sm">
                 Owner: <span className="font-mono">{owner.slice(0, 6)}...{owner.slice(-4)}</span>
@@ -163,7 +163,7 @@ export default function SpiritDetail() {
           {/* Visualization */}
           <div className="space-y-6">
             <div className="border border-white/10 rounded-2xl p-6 bg-gradient-to-br from-purple-900/20 to-transparent">
-              <h2 className="text-xl font-semibold mb-4">Spirit Visualization</h2>
+              <h2 className="text-xl font-semibold mb-4">Soul Visualization</h2>
               <SpiritCanvas attrs={attrs} />
             </div>
 

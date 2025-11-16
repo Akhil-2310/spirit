@@ -381,7 +381,7 @@ const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
-            🎨 Polkadot Spirits Wall
+            🎨 Polkadot Souls Wall
           </h1>
           <p className="text-gray-400 mb-2">
             A collaborative canvas where every Spirit leaves its mark. Paint one pixel every 5 minutes.
@@ -389,7 +389,7 @@ const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
           {address && tokenId && (
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg text-sm text-green-400">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Connected with Spirit #{tokenId.toString()}
+              Connected with Soul #{tokenId.toString()}
             </div>
           )}
         </div>
@@ -433,7 +433,7 @@ const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
               <div className="mb-4 p-4 bg-white/5 rounded-xl border border-white/10 w-full">
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Your Soul:</span>
+                    <span className="text-gray-400">Your Polkadot Soul:</span>
                     <span className="font-mono">#{tokenId.toString()}</span>
                   </div>
                   <div className="flex justify-between">
@@ -526,7 +526,7 @@ const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
               <div className="p-4 bg-purple-600/20 border border-purple-500/30 rounded-xl">
                 <h4 className="font-semibold mb-2">💡 Tip</h4>
                 <p className="text-sm text-gray-300">
-                  Your Spirit&apos;s attributes influence where your pixel naturally wants to appear!
+                  Your Polkadot Soul&apos;s attributes influence where your pixel naturally wants to appear!
                   High chaos = more random placement, high influence = stronger presence.
                 </p>
               </div>
