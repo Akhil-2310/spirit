@@ -1,6 +1,19 @@
-# Kusama Spirits 
+# SoulScape
 
-A Next.js application for the Kusama Spirits project - living, evolving NFTs that grow from blockchain behavior.
+Soulscape transforms your Polkadot on-chain activity into a living digital organism.
+
+Every wallet mints a Polkadot “Soul” NFT whose traits evolve with real blockchain behavior.
+These traits generate dynamic SVG art, mood-driven music, and determine how you paint on a real-time collaborative graffiti wall.
+
+All Soul evolution, mood spikes, pixel strokes, and ephemeral states are stored, queried, and streamed using Arkiv, making Soulscape a fully reactive, living art world.
+
+This is part social experiment, part generative art platform, part on-chain identity primitive.
+
+[Video Demo](https://www.loom.com/share/8ea805b1094748d49272d7966c28c6ae)
+
+[Live Link](https://spirit-wggn.vercel.app/)
+
+[Presentation](https://www.canva.com/design/DAG42Dj_sjk/-ERWU0DyyDTuAwqoEEVaCA/edit)
 
 ## Features
 
@@ -25,7 +38,6 @@ A Next.js application for the Kusama Spirits project - living, evolving NFTs tha
 - Node.js 18+ 
 - MetaMask or compatible wallet
 - Access to Polkadot Asset Hub testnet
-
 
 
 ## Key Features Explained
@@ -58,7 +70,7 @@ A collaborative 256x256 pixel canvas where:
 - All pixels are stored on-chain
 - Historical data available via Arkiv
 
-
+## [Arkiv Block Explorer Link](https://explorer.mendoza.hoodi.arkiv.network/address/0x8b916003D0C8F1f468a720BA4Ab5EA9678bc6e61?tab=txs)
 
 ## Smart Contracts
 
