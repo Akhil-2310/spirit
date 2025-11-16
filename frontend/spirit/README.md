@@ -9,6 +9,12 @@ All Soul evolution, mood spikes, pixel strokes, and ephemeral states are stored,
 
 This is part social experiment, part generative art platform, part on-chain identity primitive.
 
+[Video Demo](https://www.loom.com/share/8ea805b1094748d49272d7966c28c6ae)
+
+[Live Link](https://spirit-wggn.vercel.app/)
+
+[Presentation](https://www.canva.com/design/DAG42Dj_sjk/-ERWU0DyyDTuAwqoEEVaCA/edit)
+
 ## Features
 
 - 🎨 **Generative Art Visualization** - Animated canvas that reflects spirit attributes
