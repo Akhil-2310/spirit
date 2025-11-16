@@ -1,0 +1,38 @@
+{
+  "name": "hardhat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "evolve": "tsx backend/evolution-engine.ts",
+    "evolve:all": "tsx backend/evolution-engine.ts",
+    "sync-graffiti": "tsx backend/graffiti-sync.ts",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@arkiv-network/sdk": "^0.4.4",
+    "@openzeppelin/contracts": "^5.2.0",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.4",
+    "express": "^5.1.0",
+    "hardhat": "^2.22.19",
+    "node-fetch": "^3.3.2",
+    "tslib": "^2.8.1",
+    "viem": "^2.21.54"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/solidity-analyzer-darwin-arm64": "^0.1.2",
+    "@parity/hardhat-polkadot": "^0.2.1",
+    "@types/express": "^5.0.5",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
